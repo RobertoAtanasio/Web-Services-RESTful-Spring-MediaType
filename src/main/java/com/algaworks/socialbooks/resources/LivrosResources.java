@@ -1,12 +1,13 @@
 package com.algaworks.socialbooks.resources;
 
-
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +47,13 @@ public class LivrosResources {
 	
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public ResponseEntity<Livro> buscar(@PathVariable("id") Long id) {
-		return ResponseEntity.status(HttpStatus.OK).body(livrosService.buscar(id));
+		
+		// o livro buscado ficará em cache por 20 segundos, após esse tempo, o sistema irá novamente ao servidor
+		Livro livro = livrosService.buscar(id);
+		
+		CacheControl cacheControl = CacheControl.maxAge(20, TimeUnit.SECONDS);
+		
+		return ResponseEntity.status(HttpStatus.OK).cacheControl(cacheControl).body(livro);
 	}
 
 	@RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
@@ -66,6 +73,11 @@ public class LivrosResources {
 	public ResponseEntity<Comentario> adicionarComentario(
 			@PathVariable("id") Long livroId, 
 			@RequestBody Comentario comentario) {
+		
+//		System.out.println("......AQUI");
+//		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//		System.out.println("......" +  auth.getName());
+//		comentario.setUsuario(auth.getName());
 		
 		comentario = livrosService.salvarComentario(livroId, comentario);
 		
